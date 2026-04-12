@@ -26,17 +26,28 @@ export default function LearnPage() {
 
   const openSections = useMemo(() => {
     const hash = searchParams.get('open');
-    if (!hash) return new Set([1, 2]); // Padrão: seções 1 e 2 abertas
-    return new Set(hash.split(',').map(Number));
+    const set = hash ? new Set(hash.split(',').map(Number)) : new Set([1, 2]);
+    // Sempre garante pelo menos 1 seção aberta
+    if (set.size === 0) set.add(1);
+    return set;
   }, [searchParams]);
 
   const toggleSection = (sectionId: number) => {
-    const next = new Set(openSections);
+    let next = new Set(openSections);
+    const sectionsArray = Array.from(sections.keys()).sort((a, b) => a - b);
+    const currentIdx = sectionsArray.indexOf(sectionId);
+    
     if (next.has(sectionId)) {
+      // Se fechando, abre a próxima disponível se só tem 1 aberta
+      if (next.size === 1) {
+        const nextSection = sectionsArray.find(s => s !== sectionId);
+        if (nextSection) next.add(nextSection);
+      }
       next.delete(sectionId);
     } else {
       next.add(sectionId);
     }
+    
     setSearchParams({ open: Array.from(next).join(',') });
   };
 
