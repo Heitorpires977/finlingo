@@ -26,7 +26,10 @@ export default function LearnPage() {
 
   const openSections = useMemo(() => {
     const hash = searchParams.get('open');
-    return hash ? new Set(hash.split(',').map(Number)) : new Set([1]);
+    if (!hash) return new Set([1]); // Padrão: só seção 1 aberta
+    const set = new Set(hash.split(',').map(Number));
+    if (set.size === 0) set.add(1); // Se todas fechadas, abre seção 1
+    return set;
   }, [searchParams]);
 
   const toggleSection = (sectionId: number) => {
