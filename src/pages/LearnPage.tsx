@@ -4,7 +4,8 @@ import { useDailyQuests } from '@/hooks/useGameData';
 import { CheckCircle, Lock, Star, Zap, Target } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { allModules } from '@/data/lessons';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const SECTION_COLORS = ['bg-primary', 'bg-secondary'];
 const SECTION_ICONS = ['💰', '📊'];
@@ -102,6 +103,11 @@ export default function LearnPage() {
   })() : false;
 
   const firstIncompleteSectionRef = useRef<HTMLDivElement>(null);
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 1: true });
+
+  const toggleSection = (sectionId: number) => {
+    setOpenSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
 
   return (
     <AppLayout>
@@ -143,18 +149,25 @@ export default function LearnPage() {
           </div>
         )}
 
-        {Array.from(sections.entries()).map(([sectionId, section], idx) => (
-          <div key={sectionId} className="space-y-3">
-            <div className="flex items-center gap-3">
+        {Array.from(sections.entries()).map(([sectionId, section], idx) => {
+          const isOpen = openSections[sectionId] ?? false;
+          return (
+          <div key={sectionId} className="space-y-2">
+            <button
+              onClick={() => toggleSection(sectionId)}
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border hover:bg-muted/50 transition-all"
+            >
               <div className={`w-10 h-10 rounded-xl ${SECTION_COLORS[idx % 2]} flex items-center justify-center text-xl`}>
                 {SECTION_ICONS[idx % 2]}
               </div>
-              <div>
+              <div className="flex-1 text-left">
                 <h2 className="font-bold text-foreground">Seção {sectionId}</h2>
                 <p className="text-xs text-muted-foreground">{section.title}</p>
               </div>
-            </div>
+              {isOpen ? <ChevronDown className="h-5 w-5 text-muted-foreground" /> : <ChevronRight className="h-5 w-5 text-muted-foreground" />}
+            </button>
 
+            {isOpen && (
             <div className="flex flex-col gap-2">
               {section.lessons?.map((lesson) => {
                 const completed = completedIds.has(lesson.id);
@@ -194,8 +207,10 @@ export default function LearnPage() {
                 );
               })}
             </div>
+            )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </AppLayout>
   );
