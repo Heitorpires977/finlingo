@@ -4,8 +4,7 @@ import { useDailyQuests } from '@/hooks/useGameData';
 import { CheckCircle, Lock, Star, Zap, Target } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { allModules } from '@/data/lessons';
-import { useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useMemo, useRef } from 'react';
 
 const SECTION_COLORS = ['bg-primary', 'bg-secondary'];
 const SECTION_ICONS = ['💰', '📊'];
@@ -103,11 +102,8 @@ export default function LearnPage() {
   })() : false;
 
   const firstIncompleteSectionRef = useRef<HTMLDivElement>(null);
-  const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 1: true });
 
-  const toggleSection = (sectionId: number) => {
-    setOpenSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
-  };
+  // Todas abertas por padrão (sem state para evitar #310)
 
   return (
     <AppLayout>
@@ -150,11 +146,10 @@ export default function LearnPage() {
         )}
 
         {Array.from(sections.entries()).map(([sectionId, section], idx) => {
-          const isOpen = openSections[sectionId] ?? false;
           return (
           <div key={sectionId} className="space-y-2">
             <button
-              onClick={() => toggleSection(sectionId)}
+              onClick={() => document.getElementById(`section-${sectionId}`)?.scrollIntoView({ behavior: 'smooth' })}
               className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border hover:bg-muted/50 transition-all"
             >
               <div className={`w-10 h-10 rounded-xl ${SECTION_COLORS[idx % 2]} flex items-center justify-center text-xl`}>
