@@ -1,12 +1,10 @@
 import { useLessons, useLessonProgress, useProfile } from '@/hooks/useGameData';
 import { useNavigate } from 'react-router-dom';
 import { useDailyQuests } from '@/hooks/useGameData';
-import { CheckCircle, Lock, Star, Zap, Target, Play } from 'lucide-react';
+import { CheckCircle, Lock, Star, Zap, Target } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { allModules } from '@/data/lessons';
-import { useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useMemo, useRef } from 'react';
 
 const SECTION_COLORS = ['bg-primary', 'bg-secondary'];
 const SECTION_ICONS = ['💰', '📊'];
@@ -24,8 +22,6 @@ export default function LearnPage() {
   const { data: profile } = useProfile();
   const { data: quests } = useDailyQuests();
   const navigate = useNavigate();
-
-const scrollRef = useRef<HTMLDivElement>(null);
 
   const todayQuest = useMemo(() => {
     if (!quests || quests.length === 0) return null;
@@ -106,26 +102,13 @@ const scrollRef = useRef<HTMLDivElement>(null);
   })() : false;
 
   const firstIncompleteSectionRef = useRef<HTMLDivElement>(null);
-  const [openSections, setOpenSections] = useState<Set<number>>(new Set([1]));
-
-  const toggleSection = (sectionId: number) => {
-    setOpenSections(prev => {
-      const next = new Set(prev);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
-      } else {
-        next.add(sectionId);
-      }
-      return next;
-    });
-  };
 
   return (
     <AppLayout>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {todayQuest && (
-          <div className={`bg-card rounded-2xl border p-4 space-y-3 transition-all ${
-            isQuestCompleted ? 'animate-quest-complete border-finlingo-coins' : ''
+          <div className={`bg-card rounded-2xl border p-4 space-y-3 ${
+            isQuestCompleted ? 'border-finlingo-coins' : ''
           }`}>
             <div className="flex items-center gap-2 font-bold text-foreground">
               <Target className="h-5 w-5 text-accent" />
@@ -136,7 +119,7 @@ const scrollRef = useRef<HTMLDivElement>(null);
             }`}>
               <span>{(todayQuest as any).description}</span>
               {isQuestCompleted ? (
-                <span className="font-bold text-finlingo-coins animate-fade-in">✅ Completa!</span>
+                <span className="font-bold text-finlingo-coins">✅ Completa!</span>
               ) : (
                 <span className="font-bold text-finlingo-xp">+{(todayQuest as any).xp_reward} XP</span>
               )}
@@ -160,77 +143,59 @@ const scrollRef = useRef<HTMLDivElement>(null);
           </div>
         )}
 
-        {Array.from(sections.entries()).map(([sectionId, section], idx) => {
-          const firstIncomplete = section.lessons?.find(l => !completedIds.has(l.id));
-          const isUnlocked = firstIncomplete ? isLessonUnlocked(sectionId, firstIncomplete.lesson_number) : false;
-          const shouldRef = firstIncomplete && isUnlocked && !firstIncompleteSectionRef.current;
-          const isOpen = openSections.has(sectionId);
-
-          return (
-            <div
-              key={sectionId}
-              id={`section-${sectionId}`}
-              className="space-y-2"
-              ref={shouldRef ? firstIncompleteSectionRef : undefined}
-            >
-              <button
-                onClick={() => toggleSection(sectionId)}
-                className="w-full flex items-center gap-3 p-3 rounded-2xl bg-card border hover:bg-muted/50 transition-all"
-              >
-                <div className={`w-10 h-10 rounded-xl ${SECTION_COLORS[idx % 2]} flex items-center justify-center text-xl`}>
-                  {SECTION_ICONS[idx % 2]}
-                </div>
-                <div className="flex-1 text-left">
-                  <h2 className="font-bold text-sm text-foreground">Seção {sectionId}</h2>
-                  <p className="text-xs text-muted-foreground">{section.title}</p>
-                </div>
-                {isOpen ? <ChevronDown className="h-5 w-5 text-muted-foreground" /> : <ChevronRight className="h-5 w-5 text-muted-foreground" />}
-              </button>
-
-              {isOpen && (
-              <div className="flex flex-col items-center gap-2">
-                {section.lessons?.map((lesson) => {
-                  const completed = completedIds.has(lesson.id);
-                  const unlocked = isLessonUnlocked(sectionId, lesson.lesson_number);
-                  const perfect = progress?.find(p => p.lesson_id === lesson.id)?.perfect;
-
-                  return (
-                    <button
-                      key={lesson.id}
-                      onClick={() => handleLessonClick(lesson, unlocked)}
-                      disabled={!unlocked}
-                      className={`w-full max-w-sm flex items-center gap-4 p-3 rounded-2xl border-2 transition-all ${
-                        completed
-                          ? 'bg-finlingo-correct/10 border-finlingo-correct shadow-sm'
-                          : unlocked
-                          ? 'bg-card border-primary/30 hover:border-primary hover:shadow-md cursor-pointer animate-pulse-glow'
-                          : 'bg-muted/50 border-border opacity-60 cursor-not-allowed'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                        completed
-                          ? 'bg-finlingo-correct text-primary-foreground'
-                          : unlocked
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
-                      }`}>
-                        {completed ? <CheckCircle className="h-4 w-4" /> : unlocked ? lesson.lesson_number : <Lock className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-bold text-sm text-foreground">{lesson.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {lesson.is_quiz ? '📝 Quiz' : `📖 ${((lesson.activity_data as unknown[]) || []).length} atividades`} · +{lesson.xp_reward} XP
-                        </p>
-                      </div>
-                      {perfect && <Star className="h-5 w-5 text-finlingo-coins fill-current" />}
-                    </button>
-                  );
-                })}
+        {Array.from(sections.entries()).map(([sectionId, section], idx) => (
+          <div key={sectionId} className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl ${SECTION_COLORS[idx % 2]} flex items-center justify-center text-xl`}>
+                {SECTION_ICONS[idx % 2]}
               </div>
-              )}
+              <div>
+                <h2 className="font-bold text-foreground">Seção {sectionId}</h2>
+                <p className="text-xs text-muted-foreground">{section.title}</p>
+              </div>
             </div>
-          );
-        })}
+
+            <div className="flex flex-col gap-2">
+              {section.lessons?.map((lesson) => {
+                const completed = completedIds.has(lesson.id);
+                const unlocked = isLessonUnlocked(sectionId, lesson.lesson_number);
+                const perfect = progress?.find(p => p.lesson_id === lesson.id)?.perfect;
+
+                return (
+                  <button
+                    key={lesson.id}
+                    onClick={() => handleLessonClick(lesson, unlocked)}
+                    disabled={!unlocked}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                      completed
+                        ? 'bg-finlingo-correct/10 border-finlingo-correct'
+                        : unlocked
+                        ? 'bg-card border-primary/30 hover:border-primary cursor-pointer'
+                        : 'bg-muted/50 border-border opacity-60 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                      completed
+                        ? 'bg-finlingo-correct text-primary-foreground'
+                        : unlocked
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {completed ? <CheckCircle className="h-4 w-4" /> : unlocked ? lesson.lesson_number : <Lock className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="font-bold text-sm text-foreground">{lesson.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lesson.is_quiz ? '📝 Quiz' : `📖 ${((lesson.activity_data as unknown[]) || []).length} atividades`} · +{lesson.xp_reward} XP
+                      </p>
+                    </div>
+                    {perfect && <Star className="h-4 w-4 text-finlingo-coins" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </AppLayout>
   );
