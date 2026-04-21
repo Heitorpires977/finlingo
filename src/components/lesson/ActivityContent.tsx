@@ -172,14 +172,27 @@ interface ActivityContentProps {
 export function ActivityContent(props: ActivityContentProps) {
   const { activity } = props;
 
+  if (!activity || !activity.type) return null;
+
   // Support both "activity" and "multiple_choice" types
-  const activityType = activity.type === 'activity' ? 'multiple_choice' : activity.type;
+  const rawType = activity.type || '';
+  const activityType = rawType === 'activity' ? 'multiple_choice' : rawType.replace('_', '').replace('in', '').replace('the', '');
+
+  // Get title - support different field names for different activity types
+  const getTitle = () => {
+    if (activityType.includes('true')) return activity.statement || activity.question || 'Verdadeiro ou Falso?';
+    if (activityType.includes('fill')) return activity.sentence || activity.question || 'Complete a frase:';
+    if (activityType.includes('match')) return activity.instruction || activity.question || 'Relacione as colunas:';
+    return activity.question || '';
+  };
 
   return (
     <>
-      <h2 className="text-xl font-black text-foreground animate-fade-in">{activity.question}</h2>
+      {getTitle() && (
+        <h2 className="text-xl font-black text-foreground animate-fade-in">{getTitle()}</h2>
+      )}
 
-      {activityType === 'multiple_choice' && (
+      {(activityType.includes('multiple') || activityType === 'quiz') && (
         <MultipleChoice
           activity={activity}
           answered={props.answered}
@@ -189,11 +202,11 @@ export function ActivityContent(props: ActivityContentProps) {
         />
       )}
 
-      {activityType === 'true_false' && (
+      {(activityType.includes('true')) && (
         <TrueFalse activity={activity} answered={props.answered} onSelect={props.onTrueFalse} />
       )}
 
-      {activityType === 'fill_blank' && (
+      {(activityType.includes('fill')) && (
         <FillBlank
           answered={props.answered}
           fillAnswer={props.fillAnswer}
@@ -202,7 +215,7 @@ export function ActivityContent(props: ActivityContentProps) {
         />
       )}
 
-      {activityType === 'match_pairs' && (
+      {(activityType.includes('match')) && (
         <MatchPairs
           activity={activity}
           answered={props.answered}

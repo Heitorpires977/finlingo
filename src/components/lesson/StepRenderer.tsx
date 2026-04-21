@@ -150,13 +150,13 @@ function TrueFalseStep({ step, onSolved, onWrong, onAnswered }: { step: Step; on
     <div className="space-y-4 animate-fade-in">
       <StepHeader type="true_false" />
       <h2 className="text-xl font-black text-foreground">{step.statement}</h2>
-      <div className="flex gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {([{ label: 'Verdadeiro', value: 1 }, { label: 'Falso', value: 0 }] as const).map(({ label, value }) => (
           <button
             key={label}
             onClick={() => handleSelect(value)}
             disabled={answered}
-            className={`flex-1 p-4 rounded-2xl border-2 font-bold text-lg transition-all duration-200 ${
+            className={`w-full py-6 px-4 rounded-2xl border-2 font-bold text-xl transition-all duration-200 ${
               answered && value === correctVal
                 ? 'bg-finlingo-correct/10 border-finlingo-correct text-foreground'
                 : answered && value === selected && value !== correctVal

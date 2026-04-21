@@ -119,10 +119,26 @@ export default function LearnPage() {
     }
   };
 
+  // Calcular lições completadas HOJE
+  const lessonsCompletedToday = useMemo(() => {
+    if (!progress || !profile?.last_lesson_date) return 0;
+    const today = new Date().toISOString().split('T')[0];
+    // last_lesson_date está no formato ISO, verificar se é de hoje
+    const isToday = profile.last_lesson_date.split('T')[0] === today;
+    if (!isToday) return 0;
+    // Contar lições com completion_date de hoje
+    return progress.filter(p => {
+      if (!p.completed || !p.completed_at) return false;
+      return p.completed_at.split('T')[0] === today;
+    }).length;
+  }, [progress, profile]);
+
   const isQuestCompleted = todayQuest && profile ? (() => {
     const q = todayQuest as any;
     switch (q.requirement_type) {
-      case 'lessons_completed': return (completedIds.size >= q.requirement_value);
+      case 'lessons_completed': 
+        console.log('DEBUG quests - lessons completed today:', lessonsCompletedToday, 'required:', q.requirement_value);
+        return (lessonsCompletedToday >= q.requirement_value);
       case 'xp_earned': return ((profile.xp_total ?? 0) >= q.requirement_value);
       case 'streak_maintain': return ((profile.streak_current ?? 0) >= q.requirement_value);
       default: return false;

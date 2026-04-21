@@ -45,12 +45,36 @@ export default function LessonPage() {
   const steps: LessonStep[] = useMemo(() => {
     if (!lesson) return [];
 
-    // Check if activity_data already contains slides
-    const activities = lesson.activity_data;
-    const hasSlides = activities.some((a: any) => a.type === 'explanation' || a.type === 'example');
+    let activities = lesson.activity_data;
+    if (!activities) return [];
+    
+    // Se for string, faz parse
+    if (typeof activities === 'string') {
+      try {
+        activities = JSON.parse(activities);
+      } catch {
+        return [];
+      }
+    }
+    
+    // Se for objeto com propriedade 'steps', extrai o array diretamente
+    if (!Array.isArray(activities) && typeof activities === 'object') {
+      if (Array.isArray((activities as any).steps)) {
+        activities = (activities as any).steps;
+      } else {
+        activities = [activities];
+      }
+    }
+    
+    // Se ainda não for array, wrapped em array
+    if (!Array.isArray(activities)) {
+      return [];
+    }
+    
+    const hasSlides = activities.some((a: any) => a && a.type && (a.type === 'explanation' || a.type === 'example'));
 
     if (hasSlides) {
-      return activities.map((a: any) =>
+      return activities.filter((a: any) => a).map((a: any) =>
         a.type === 'explanation' || a.type === 'example'
           ? { ...a, _kind: 'slide' as const }
           : { ...a, _kind: 'activity' as const }
@@ -58,7 +82,7 @@ export default function LessonPage() {
     }
 
     // No default slides — just use activities directly
-    const acts: LessonStep[] = activities.map((a: any) => ({ ...a, _kind: 'activity' as const }));
+    const acts: LessonStep[] = activities.filter((a: any) => a).map((a: any) => ({ ...a, _kind: 'activity' as const }));
     return acts;
   }, [lesson]);
 
@@ -74,10 +98,16 @@ export default function LessonPage() {
   }, [currentIdx, steps.length]);
 
   if (!lesson || lessonLoading) return <LessonSkeleton />;
+  
+  if (steps.length === 0 || !currentStep) {
+    return <LessonSkeleton />;
+  }
 
   const totalSteps = steps.length;
   const isContentSlide = currentStep?._kind === 'slide';
   const progressPct = ((currentIdx + (isContentSlide || answered ? 1 : 0)) / totalSteps) * 100;
+
+  console.log('DEBUG render:', currentIdx, totalSteps, currentStep?.type, 'answered:', answered);
 
   const checkAnswer = (correct: boolean) => {
     setAnswered(true);
@@ -92,17 +122,68 @@ export default function LessonPage() {
   const handleMultipleChoice = (idx: number) => {
     if (answered) return;
     setSelectedOption(idx);
-    checkAnswer(idx === (currentStep as Activity).correct);
+    const correctVal = (currentStep as Activity).correct;
+    console.log('DEBUG multiple choice - idx:', idx, 'correctVal:', correctVal);
+    
+    // Se correct for string com número, converter para número
+    if (typeof correctVal === 'string') {
+      const optIndex = parseInt(correctVal);
+      if (!isNaN(optIndex)) {
+        checkAnswer(idx === optIndex);
+      } else {
+        const options = (currentStep as Activity).options || [];
+        const correctOption = options[idx];
+        const isCorrect = correctOption && correctOption.toLowerCase().includes(correctVal.toLowerCase());
+        checkAnswer(isCorrect);
+      }
+    } else {
+      // Se correctVal é 0, 1, 2, etc - usar diretamente
+      checkAnswer(idx === Number(correctVal));
+    }
   };
 
   const handleTrueFalse = (val: boolean) => {
     if (answered) return;
-    checkAnswer(val === (currentStep as Activity).correct);
+    const correctVal = (currentStep as Activity).correct;
+    // Se correct for uma string, verificar o texto
+    if (typeof correctVal === 'string') {
+      const expectedTrue = correctVal.toLowerCase() === 'true' || correctVal === '1' || correctVal === 'verdadeiro';
+      checkAnswer(val === expectedTrue);
+    } else {
+      const normalized = (correctVal === true || correctVal === 1 || correctVal === '1' || correctVal === 'true') ? 1 : 0;
+      checkAnswer((val ? 1 : 0) === normalized);
+    }
   };
 
   const handleFillBlank = () => {
     if (answered) return;
-    const correct = fillAnswer.trim().toLowerCase() === ((currentStep as Activity).answer ?? '').toLowerCase();
+    
+    // Função de normalização muito flexível
+    const normalize = (s: string) => {
+      let txt = s.toLowerCase().trim();
+      // Remove acentos
+      txt = txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      // Substitui & por "e" 
+      txt = txt.replace(/&/g, 'e');
+      // Remove todos os tipos de espaços (múltiplos, tabs, etc)
+      txt = txt.replace(/\s+/g, '');
+      // Versão só letras/números (sem espaço)
+      const noSpace = txt;
+      // Versão com espaços normais
+      const withSpace = txt.replace(/([a-z])([0-9])/g, '$1 $2').replace(/([0-9])([a-z])/g, '$1 $2').replace(/ +/g, ' ').trim();
+      
+      return [noSpace, withSpace];
+    };
+    
+    const userNorm = normalize(fillAnswer);
+    const correctNorm = normalize((currentStep as Activity).answer || '');
+    
+    // Verifica qualquer variação
+    const correct = userNorm.some(u => correctNorm.includes(u)) || 
+                 correctNorm.some(c => userNorm.includes(c)) ||
+                 userNorm[0] === correctNorm[0] ||
+                 userNorm[1] === correctNorm[1];
+    
     checkAnswer(correct);
   };
 
@@ -132,6 +213,14 @@ export default function LessonPage() {
   };
 
   const goToStep = async (direction: 'next' | 'prev') => {
+    // Reset state for new activity
+    setAnswered(false);
+    setIsCorrect(false);
+    setSelectedOption(null);
+    setFillAnswer('');
+    setMatchSelected(null);
+    setMatchedPairs(new Set());
+    
     if (direction === 'next') {
       if (currentIdx + 1 >= totalSteps) {
         // Lesson complete
