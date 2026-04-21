@@ -180,10 +180,10 @@ export function ActivityContent(props: ActivityContentProps) {
 
   // Get title - support different field names for different activity types
   const getTitle = () => {
-    if (activityType.includes('true')) return activity.statement || activity.question || 'Verdadeiro ou Falso?';
-    if (activityType.includes('fill')) return activity.sentence || activity.question || 'Complete a frase:';
-    if (activityType.includes('match')) return activity.instruction || activity.question || 'Relacione as colunas:';
-    return activity.question || '';
+    if (activityType.includes("true")) return activity.statement || activity.question || "Verdadeiro ou Falso?";
+    if (activityType.includes("fill")) return activity.sentence || activity.question || "Complete a frase:";
+    if (activityType.includes("match")) return activity.instruction || activity.question || "Relacione as colunas:";
+    return activity.question || "";
   };
 
   return (
@@ -192,7 +192,7 @@ export function ActivityContent(props: ActivityContentProps) {
         <h2 className="text-xl font-black text-foreground animate-fade-in">{getTitle()}</h2>
       )}
 
-      {(activityType.includes('multiple') || activityType === 'quiz') && (
+      {(activityType.includes("multiple") || activityType === "quiz") && (
         <MultipleChoice
           activity={activity}
           answered={props.answered}
@@ -202,11 +202,11 @@ export function ActivityContent(props: ActivityContentProps) {
         />
       )}
 
-      {(activityType.includes('true')) && (
+      {(activityType.includes("true")) && (
         <TrueFalse activity={activity} answered={props.answered} onSelect={props.onTrueFalse} />
       )}
 
-      {(activityType.includes('fill')) && (
+      {(activityType.includes("fill")) && (
         <FillBlank
           answered={props.answered}
           fillAnswer={props.fillAnswer}
@@ -215,7 +215,7 @@ export function ActivityContent(props: ActivityContentProps) {
         />
       )}
 
-      {(activityType.includes('match')) && (
+      {(activityType.includes("match")) && (
         <MatchPairs
           activity={activity}
           answered={props.answered}

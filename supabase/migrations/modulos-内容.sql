@@ -269,7 +269,7 @@ INSERT INTO public.lessons (section_id, section_title, lesson_number, title, xp_
   {"type": "activity", "question": "O que significa IPO?", "options": ["Índice de Preço", "Initial Public Offering", "Investimento", "Imposto"], "correct": 1},
   {"type": "activity", "question": "Qual ação confere direito a voto?", "options": ["Preferencial", "Unit", "Ordinária", "BDR"], "correct": 2},
   {"type": "activity", "question": "Sufixo 11 no ticker indica?", "options": ["Ação de empresa estatal", "BDR", "ETF ou Fundo", "Ação preferencial"], "correct": 2},
-  {"type": "activity", "question": "Principal benefício deser acionista?", "options": ["Salário mensal", "Dividendos e valorização", "Desconto", "Garantia de emprego"], "correct": 1},
+  {"type": "activity", "question": "Principal benefício de ser acionista?", "options": ["Salário mensal", "Dividendos e valorização", "Desconto", "Garantia de emprego"], "correct": 1},
   {"type": "activity", "question": "O que determina o preço?", "options": ["Empresa define", "Governo regula", "Oferta e demanda", "BC estipula"], "correct": 2},
   {"type": "activity", "question": "Evento que causa ALTA?", "options": ["Fraude contábil", "Resultado acima do esperado", "Aumento de juros", "Renúncia do CEO"], "correct": 1},
   {"type": "activity", "question": "WEG na última década é exemplo de:", "options": ["Queda por má gestão", "Volatilidade", "Valorização consistente", "Fraude descoberta"], "correct": 2},
