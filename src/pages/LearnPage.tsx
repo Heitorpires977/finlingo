@@ -137,7 +137,6 @@ export default function LearnPage() {
     const q = todayQuest as any;
     switch (q.requirement_type) {
       case 'lessons_completed': 
-        console.log('DEBUG quests - lessons completed today:', lessonsCompletedToday, 'required:', q.requirement_value);
         return (lessonsCompletedToday >= q.requirement_value);
       case 'xp_earned': return ((profile.xp_total ?? 0) >= q.requirement_value);
       case 'streak_maintain': return ((profile.streak_current ?? 0) >= q.requirement_value);

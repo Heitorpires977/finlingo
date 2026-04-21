@@ -107,8 +107,6 @@ export default function LessonPage() {
   const isContentSlide = currentStep?._kind === 'slide';
   const progressPct = ((currentIdx + (isContentSlide || answered ? 1 : 0)) / totalSteps) * 100;
 
-  console.log('DEBUG render:', currentIdx, totalSteps, currentStep?.type, 'answered:', answered);
-
   const checkAnswer = (correct: boolean) => {
     setAnswered(true);
     setIsCorrect(correct);
@@ -123,7 +121,6 @@ export default function LessonPage() {
     if (answered) return;
     setSelectedOption(idx);
     const correctVal = (currentStep as Activity).correct;
-    console.log('DEBUG multiple choice - idx:', idx, 'correctVal:', correctVal);
     
     // Se correct for string com número, converter para número
     if (typeof correctVal === 'string') {
