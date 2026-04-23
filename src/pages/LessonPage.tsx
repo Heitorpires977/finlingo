@@ -126,7 +126,7 @@ export default function LessonPage() {
     setIsCorrect(correct);
     if (!correct) {
       setMistakes(m => m + 1);
-      setHearts(h => Math.max(0, h - 1));
+      // Apenas chamar o mutation - ele já atualiza no banco
       loseHeart.mutate();
     }
   };
