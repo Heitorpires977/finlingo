@@ -90,13 +90,15 @@ export default function LessonPage() {
 
   useEffect(() => {
     if (!currentStep || currentStep._kind !== 'activity') return;
-    if (currentStep.type === 'match_pairs' && currentStep.pairs && currentStep.pairs.length > 0) {
-      const indices = currentStep.pairs.map((_: any, i: number) => i);
-      setShuffledRight(indices.sort(() => Math.random() - 0.5));
-      setMatchedPairs(new Set());
-      setMatchSelected(null);
-    }
-  }, [currentIdx, steps.length]);
+    if (currentStep.type !== 'match_pairs') return;
+    if (!currentStep.pairs || currentStep.pairs.length === 0) return;
+    if (shuffledRight && shuffledRight.length === currentStep.pairs.length) return;
+    
+    const indices = currentStep.pairs.map((_: any, i: number) => i);
+    setShuffledRight(indices.sort(() => Math.random() - 0.5));
+    setMatchedPairs(new Set());
+    setMatchSelected(null);
+  }, [currentIdx]);
 
   if (!lesson || lessonLoading) return <LessonSkeleton />;
   
@@ -185,7 +187,7 @@ export default function LessonPage() {
     checkAnswer(correct);
   };
 
-  const handleMatchClick = (side: 'left' | 'right', idx: number) => {
+const handleMatchClick = (side: 'left' | 'right', idx: number) => {
     if (answered) return;
     
     const activity = currentStep as Activity;
@@ -195,39 +197,34 @@ export default function LessonPage() {
     // Se já foi conectado, não fazer nada
     if (matchedPairs.has(idx) && side === 'left') return;
     
-    // Primeira seleção
+    // Primeira seleção - apenas setar
     if (!matchSelected) {
       setMatchSelected({ side, idx });
       return;
     }
     
-    // Se clicou no mesmo lado, atualizar seleção
+    // Se clicou no mesmo lado - resetar
     if (matchSelected.side === side) {
-      setMatchSelected({ side, idx });
+      setMatchSelected(null);
       return;
     }
     
     // Tentar conectar
     const leftIdx = side === 'left' ? idx : matchSelected.idx;
     const rightOriginalIdx = side === 'right' ? idx : matchSelected.idx;
-    
-    // Verificar se a conexão está correta
     const isCorrectMatch = shuffledRight[rightOriginalIdx] === leftIdx;
     
     if (isCorrectMatch) {
       const newMatched = new Set(matchedPairs);
       newMatched.add(leftIdx);
       setMatchedPairs(newMatched);
-      setMatchSelected(null);
       
-      // Verificar se completou todas as conexões
       if (newMatched.size === activity.pairs.length) {
         checkAnswer(true);
       }
-    } else {
-      // resposta errada - não marca como matched, mas limpa a seleção
-      setMatchSelected(null);
     }
+    
+    setMatchSelected(null);
   };
 
   const goToStep = async (direction: 'next' | 'prev') => {
