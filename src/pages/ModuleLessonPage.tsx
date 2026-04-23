@@ -102,6 +102,7 @@ export default function ModuleLessonPage() {
   }, []);
 
   const handleWrong = useCallback(() => {
+    if (loseHeart.isPending) return; // Guard - se já está em progresso, não chamar
     loseHeart.mutate();
   }, [loseHeart]);
 

@@ -121,13 +121,15 @@ export default function LessonPage() {
   const isContentSlide = currentStep?._kind === 'slide';
   const progressPct = ((currentIdx + (isContentSlide || answered ? 1 : 0)) / totalSteps) * 100;
 
-  const checkAnswer = (correct: boolean) => {
-    if (answered) return;  // Guard - já respondeu não chamar novamente
+const checkAnswer = (correct: boolean) => {
+    if (answered) return;
     setAnswered(true);
     setIsCorrect(correct);
     if (!correct) {
       setMistakes(m => m + 1);
-      loseHeart.mutate();
+      if (!loseHeart.isPending) {
+        loseHeart.mutate();
+      }
     }
   };
 
