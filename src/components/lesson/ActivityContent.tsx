@@ -109,11 +109,13 @@ interface MatchPairsProps {
 }
 
 function MatchPairs({ activity, answered, matchSelected, matchedPairs, shuffledRight, onMatchClick }: MatchPairsProps) {
-  if (!activity.pairs) return null;
+  if (!activity.pairs || activity.pairs.length === 0) return null;
+  
+  const pairs = activity.pairs;
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="space-y-2">
-        {activity.pairs.map((p, i) => (
+        {pairs.map((p, i) => (
           <button
             key={`l-${i}`}
             onClick={() => onMatchClick('left', i)}
@@ -126,7 +128,7 @@ function MatchPairs({ activity, answered, matchSelected, matchedPairs, shuffledR
                 : 'border-border bg-card text-foreground hover:border-primary/50'
             }`}
           >
-            {p.left}
+            {p.left ?? p.term ?? ''}
           </button>
         ))}
       </div>
@@ -144,7 +146,7 @@ function MatchPairs({ activity, answered, matchSelected, matchedPairs, shuffledR
                 : 'border-border bg-card text-foreground hover:border-secondary/50'
             }`}
           >
-            {activity.pairs![origIdx].right}
+            {pairs[origIdx]?.right ?? pairs[origIdx]?.definition ?? ''}
           </button>
         ))}
       </div>
