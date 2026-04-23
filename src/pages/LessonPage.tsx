@@ -122,11 +122,11 @@ export default function LessonPage() {
   const progressPct = ((currentIdx + (isContentSlide || answered ? 1 : 0)) / totalSteps) * 100;
 
   const checkAnswer = (correct: boolean) => {
+    if (answered) return;  // Guard - já respondeu não chamar novamente
     setAnswered(true);
     setIsCorrect(correct);
     if (!correct) {
       setMistakes(m => m + 1);
-      // Apenas chamar o mutation - ele já atualiza no banco
       loseHeart.mutate();
     }
   };
