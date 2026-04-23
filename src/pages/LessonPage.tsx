@@ -89,26 +89,27 @@ export default function LessonPage() {
   const currentStep = steps[currentIdx];
 
   useEffect(() => {
-    // Verificações básicas de segurança
-    if (!currentStep || currentStep._kind !== 'activity') return;
+    // Guard early return - saídas rápidas
+    if (!currentStep) return;
+    if (currentStep._kind !== 'activity') return;
     if (currentStep.type !== 'match_pairs') return;
-    if (!currentStep.pairs || currentStep.pairs.length === 0) return;
+    if (!currentStep.pairs) return;
+    if (currentStep.pairs.length === 0) return;
     
-    // Só inicializar se necessário (evita re-renders)
-    const isInitialized = shuffledRight && 
-                          shuffledRight.length === currentStep.pairs.length && 
-                          matchedPairs && 
-                          matchedPairs.size > 0;
-    if (isInitialized) return;
+    // Se já está inicializado, não fazer nada
+    if (shuffledRight?.length === currentStep.pairs.length) return;
     
-    // Inicializar com verificação de segurança
-    if (currentStep.pairs && currentStep.pairs.length > 0) {
-      const indices = currentStep.pairs.map((_: any, i: number) => i);
-      setShuffledRight(indices.sort(() => Math.random() - 0.5));
-      setMatchedPairs(new Set());
-      setMatchSelected(null);
-    }
-  }, [currentIdx, lesson?.id]);
+    const pairs = currentStep.pairs;
+    if (!pairs || pairs.length === 0) return;
+    
+    // Criar array de índices e embaralhar
+    const indices = Array.from({ length: pairs.length }, (_, i) => i);
+    const shuffled = indices.sort(() => Math.random() - 0.5);
+    
+    setShuffledRight(shuffled);
+    setMatchedPairs(new Set());
+    setMatchSelected(null);
+  }, [currentStep?.id]);
 
   if (!lesson || lessonLoading) return <LessonSkeleton />;
   

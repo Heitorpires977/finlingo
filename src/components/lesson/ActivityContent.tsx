@@ -109,9 +109,16 @@ interface MatchPairsProps {
 }
 
 function MatchPairs({ activity, answered, matchSelected, matchedPairs, shuffledRight, onMatchClick }: MatchPairsProps) {
+  // Guards de segurança
+  if (!activity) return null;
   if (!activity.pairs || activity.pairs.length === 0) return null;
+  if (!shuffledRight || shuffledRight.length === 0) return null;
+  if (!matchedPairs) return null;
   
   const pairs = activity.pairs;
+  const isMatched = (idx: number) => matchedPairs.has(idx);
+  const isSelected = (side: string, idx: number) => matchSelected?.side === side && matchSelected?.idx === idx;
+  
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="space-y-2">
@@ -119,16 +126,16 @@ function MatchPairs({ activity, answered, matchSelected, matchedPairs, shuffledR
           <button
             key={`l-${i}`}
             onClick={() => onMatchClick('left', i)}
-            disabled={matchedPairs.has(i) || answered}
+            disabled={isMatched(i) || answered}
             className={`w-full p-3 rounded-xl border-2 font-semibold text-sm transition-all duration-200 ${
-              matchedPairs.has(i)
+              isMatched(i)
                 ? 'bg-finlingo-correct/10 border-finlingo-correct text-foreground'
-                : matchSelected?.side === 'left' && matchSelected.idx === i
+                : isSelected('left', i)
                 ? 'border-primary bg-primary/10 text-foreground'
                 : 'border-border bg-card text-foreground hover:border-primary/50'
             }`}
           >
-            {p.left ?? p.term ?? ''}
+            {p?.left ?? p?.term ?? ''}
           </button>
         ))}
       </div>
@@ -137,11 +144,11 @@ function MatchPairs({ activity, answered, matchSelected, matchedPairs, shuffledR
           <button
             key={`r-${displayIdx}`}
             onClick={() => onMatchClick('right', displayIdx)}
-            disabled={matchedPairs.has(origIdx) || answered}
+            disabled={isMatched(origIdx) || answered}
             className={`w-full p-3 rounded-xl border-2 font-semibold text-sm transition-all duration-200 ${
-              matchedPairs.has(origIdx)
+              isMatched(origIdx)
                 ? 'bg-finlingo-correct/10 border-finlingo-correct text-foreground'
-                : matchSelected?.side === 'right' && matchSelected.idx === displayIdx
+                : isSelected('right', displayIdx)
                 ? 'border-secondary bg-secondary/10 text-foreground'
                 : 'border-border bg-card text-foreground hover:border-secondary/50'
             }`}
