@@ -119,28 +119,22 @@ export default function LearnPage() {
     }
   };
 
-  // Calcular lições completadas HOJE
-  const lessonsCompletedToday = useMemo(() => {
-    if (!progress || !profile?.last_lesson_date) return 0;
-    const today = new Date().toISOString().split('T')[0];
-    // last_lesson_date está no formato ISO, verificar se é de hoje
-    const isToday = profile.last_lesson_date.split('T')[0] === today;
-    if (!isToday) return 0;
-    // Contar lições com completion_date de hoje
-    return progress.filter(p => {
-      if (!p.completed || !p.completed_at) return false;
-      return p.completed_at.split('T')[0] === today;
-    }).length;
-  }, [progress, profile]);
-
-  const isQuestCompleted = todayQuest && profile ? (() => {
+  // Missão diária:的计算 sem hook adicional
+  const isQuestCompleted = todayQuest ? (() => {
     const q = todayQuest as any;
-    switch (q.requirement_type) {
-      case 'lessons_completed': 
-        return (lessonsCompletedToday >= q.requirement_value);
-      case 'xp_earned': return ((profile.xp_total ?? 0) >= q.requirement_value);
-      case 'streak_maintain': return ((profile.streak_current ?? 0) >= q.requirement_value);
-      default: return false;
+    if (q.requirement_type === 'lessons_completed') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todays = (progress ?? []).filter((p: any) => {
+        const d1 = (p.completed_at ?? p.date ?? '').toString().split('T')[0];
+        return d1 === todayStr;
+      });
+      return (todays.length >= (q.requirement_value as number));
+    } else if (q.requirement_type === 'xp_earned') {
+      return ((profile?.xp_total ?? 0) >= q.requirement_value);
+    } else if (q.requirement_type === 'streak_maintain') {
+      return ((profile?.streak_current ?? 0) >= q.requirement_value);
+    } else {
+      return false;
     }
   })() : false;
 
