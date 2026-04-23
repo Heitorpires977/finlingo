@@ -102,7 +102,6 @@ export default function ModuleLessonPage() {
   }, []);
 
   const handleWrong = useCallback(() => {
-    setHearts(h => Math.max(0, h - 1));
     loseHeart.mutate();
   }, [loseHeart]);
 
