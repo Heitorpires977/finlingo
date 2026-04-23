@@ -89,16 +89,26 @@ export default function LessonPage() {
   const currentStep = steps[currentIdx];
 
   useEffect(() => {
+    // Verificações básicas de segurança
     if (!currentStep || currentStep._kind !== 'activity') return;
     if (currentStep.type !== 'match_pairs') return;
     if (!currentStep.pairs || currentStep.pairs.length === 0) return;
-    if (shuffledRight && shuffledRight.length === currentStep.pairs.length) return;
     
-    const indices = currentStep.pairs.map((_: any, i: number) => i);
-    setShuffledRight(indices.sort(() => Math.random() - 0.5));
-    setMatchedPairs(new Set());
-    setMatchSelected(null);
-  }, [currentIdx]);
+    // Só inicializar se necessário (evita re-renders)
+    const isInitialized = shuffledRight && 
+                          shuffledRight.length === currentStep.pairs.length && 
+                          matchedPairs && 
+                          matchedPairs.size > 0;
+    if (isInitialized) return;
+    
+    // Inicializar com verificação de segurança
+    if (currentStep.pairs && currentStep.pairs.length > 0) {
+      const indices = currentStep.pairs.map((_: any, i: number) => i);
+      setShuffledRight(indices.sort(() => Math.random() - 0.5));
+      setMatchedPairs(new Set());
+      setMatchSelected(null);
+    }
+  }, [currentIdx, lesson?.id]);
 
   if (!lesson || lessonLoading) return <LessonSkeleton />;
   
@@ -188,11 +198,14 @@ export default function LessonPage() {
   };
 
 const handleMatchClick = (side: 'left' | 'right', idx: number) => {
+    // Guards de segurança
     if (answered) return;
+    if (typeof idx !== 'number' || idx < 0) return;
     
     const activity = currentStep as Activity;
     if (!activity?.pairs || activity.pairs.length === 0) return;
     if (!shuffledRight || shuffledRight.length === 0) return;
+    if (idx >= activity.pairs.length) return;
     
     // Se já foi conectado, não fazer nada
     if (matchedPairs.has(idx) && side === 'left') return;
