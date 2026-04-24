@@ -50,21 +50,26 @@ export default function LessonPage() {
   const steps: LessonStep[] = useMemo(() => {
     if (!lesson) return [];
 
-    let activities = lesson.activity_data;
+    let activities = lesson?.activity_data;
     if (!activities) return [];
+    if (activities === 'null' || activities === 'undefined') return [];
     
     // Se for string, faz parse
     if (typeof activities === 'string') {
       try {
         activities = JSON.parse(activities);
       } catch {
+        console.error('Failed to parse activity_data:', activities);
         return [];
       }
     }
     
+    // Se for null ou undefined após parse
+    if (!activities) return [];
+    
     // Se for objeto com propriedade 'steps', extrai o array diretamente
     if (!Array.isArray(activities) && typeof activities === 'object') {
-      if (Array.isArray((activities as any).steps)) {
+      if (Array.isArray((activities as any)?.steps)) {
         activities = (activities as any).steps;
       } else {
         activities = [activities];
@@ -75,6 +80,10 @@ export default function LessonPage() {
     if (!Array.isArray(activities)) {
       return [];
     }
+    
+    // Filtrar atividades inválidas
+    activities = activities.filter((a: any) => a && typeof a === 'object');
+    if (activities.length === 0) return [];
     
     const hasSlides = activities.some((a: any) => a && a.type && (a.type === 'explanation' || a.type === 'example'));
 
