@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useCompleteLessonMutation, useLoseHeartMutation, useLesson } from '@/hooks/useGameData';
@@ -33,6 +33,7 @@ export default function LessonPage() {
   const [matchedPairs, setMatchedPairs] = useState<Set<number>>(new Set());
   const [shuffledRight, setShuffledRight] = useState<number[]>([]);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
+  const heartLossBlockedRef = useRef(false);
 
   useEffect(() => {
     if (profile) {
@@ -40,6 +41,10 @@ export default function LessonPage() {
       setProfileLoaded(true);
     }
   }, [profile]);
+
+  useEffect(() => {
+    heartLossBlockedRef.current = false;
+  }, [currentIdx]);
 
   // Build unified steps: intro slides + activities
   const steps: LessonStep[] = useMemo(() => {
@@ -126,10 +131,10 @@ const checkAnswer = (correct: boolean) => {
     setAnswered(true);
     setIsCorrect(correct);
     if (!correct) {
+      if (heartLossBlockedRef.current) return;
+      heartLossBlockedRef.current = true;
       setMistakes(m => m + 1);
-      if (!loseHeart.isPending) {
-        loseHeart.mutate();
-      }
+      loseHeart.mutate();
     }
   };
 
@@ -234,13 +239,20 @@ const handleMatchClick = (side: 'left' | 'right', idx: number) => {
       const newMatched = new Set(matchedPairs);
       newMatched.add(leftIdx);
       setMatchedPairs(newMatched);
+      setMatchSelected(null);
       
       if (newMatched.size === activity.pairs.length) {
         checkAnswer(true);
       }
+    } else {
+      setMatchSelected(null);
+      if (heartLossBlockedRef.current) return;
+      heartLossBlockedRef.current = true;
+      setAnswered(true);
+      setIsCorrect(false);
+      setMistakes(m => m + 1);
+      loseHeart.mutate();
     }
-    
-    setMatchSelected(null);
   };
 
   const goToStep = async (direction: 'next' | 'prev') => {

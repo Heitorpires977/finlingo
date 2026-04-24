@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { BookOpen, Lightbulb, CheckCircle, XCircle } from 'lucide-react';
 import type { Step } from '@/data/lessons';
 
@@ -203,29 +203,49 @@ function MatchPairsStep({ step, onSolved, onWrong, onAnswered }: { step: Step; o
   const [matched, setMatched] = useState<Set<number>>(new Set());
   const [wrongPair, setWrongPair] = useState<{left: number; right: number} | null>(null);
 
+  const [processedPair, setProcessedPair] = useState<{left: number; right: number} | null>(null);
+  const wrongProcessedRef = useRef(false);
+  const matchedRef = useRef(matched);
+  matchedRef.current = matched;
+
   useEffect(() => {
-    if (selectedLeft !== null && selectedRight !== null) {
-      const rightOrigIdx = shuffledRight[selectedRight];
-      if (rightOrigIdx === selectedLeft) {
-        const newMatched = new Set(matched);
-        newMatched.add(selectedLeft);
-        setMatched(newMatched);
-        if (newMatched.size === pairs.length) {
-          onSolved();
-          onAnswered();
-        }
-      } else {
+    wrongProcessedRef.current = false;
+  }, [selectedLeft, selectedRight]);
+
+  useEffect(() => {
+    if (selectedLeft === null || selectedRight === null) return;
+    if (matchedRef.current.size === pairs.length) return;
+
+    const pairKey = `${selectedLeft}-${selectedRight}`;
+    if (processedPair && `${processedPair.left}-${processedPair.right}` === pairKey) return;
+
+    const rightOrigIdx = shuffledRight[selectedRight];
+    if (rightOrigIdx === selectedLeft) {
+      const newMatched = new Set(matchedRef.current);
+      newMatched.add(selectedLeft);
+      setMatched(newMatched);
+      setProcessedPair({ left: selectedLeft, right: selectedRight });
+      if (newMatched.size === pairs.length) {
+        onSolved();
+        onAnswered();
+      }
+    } else {
+      if (!wrongProcessedRef.current) {
         setWrongPair({ left: selectedLeft, right: selectedRight });
         onWrong();
-        onAnswered();
-        setTimeout(() => setWrongPair(null), 800);
+        wrongProcessedRef.current = true;
+        setProcessedPair({ left: selectedLeft, right: selectedRight });
+        setTimeout(() => {
+          setWrongPair(null);
+          setProcessedPair(null);
+        }, 800);
       }
-      setTimeout(() => {
-        setSelectedLeft(null);
-        setSelectedRight(null);
-      }, 300);
     }
-  }, [selectedLeft, selectedRight, shuffledRight, matched, pairs.length, onSolved, onWrong, onAnswered]);
+    setTimeout(() => {
+      setSelectedLeft(null);
+      setSelectedRight(null);
+    }, 300);
+  }, [selectedLeft, selectedRight, shuffledRight, pairs.length, onSolved, onWrong, onAnswered]);
 
   return (
     <div className="space-y-4 animate-fade-in">

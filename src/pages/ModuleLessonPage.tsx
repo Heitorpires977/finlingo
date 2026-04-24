@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowRight, Trophy, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -66,6 +66,7 @@ export default function ModuleLessonPage() {
   const [hearts, setHearts] = useState(0);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
+  const heartLossBlockedRef = useRef(false);
 
   // Reset legacy progress on first load
   useEffect(() => {
@@ -85,6 +86,11 @@ export default function ModuleLessonPage() {
     }
   }, [profile]);
 
+  // Reset heart loss block when step changes
+  useEffect(() => {
+    heartLossBlockedRef.current = false;
+  }, [currentIdx]);
+
   // Find lesson across all modules
   const lesson = allModules
     .flatMap(m => m.lessons)
@@ -102,7 +108,8 @@ export default function ModuleLessonPage() {
   }, []);
 
   const handleWrong = useCallback(() => {
-    if (loseHeart.isPending) return; // Guard - se já está em progresso, não chamar
+    if (heartLossBlockedRef.current) return;
+    heartLossBlockedRef.current = true;
     loseHeart.mutate();
   }, [loseHeart]);
 

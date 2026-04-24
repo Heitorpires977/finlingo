@@ -109,53 +109,70 @@ interface MatchPairsProps {
 }
 
 function MatchPairs({ activity, answered, matchSelected, matchedPairs, shuffledRight, onMatchClick }: MatchPairsProps) {
-  // Guards de segurança
   if (!activity) return null;
   if (!activity.pairs || activity.pairs.length === 0) return null;
-  if (!shuffledRight || shuffledRight.length === 0) return null;
-  if (!matchedPairs) return null;
   
   const pairs = activity.pairs;
-  const isMatched = (idx: number) => matchedPairs.has(idx);
-  const isSelected = (side: string, idx: number) => matchSelected?.side === side && matchSelected?.idx === idx;
+  
+  // Versão simplificada: não usa shuffledRight, usa índices diretos
+  const leftItems = pairs.map((p, i) => ({ id: i, text: p?.left ?? p?.term ?? '' }));
+  const rightItems = pairs.map((p, i) => ({ id: i, text: p?.right ?? p?.definition ?? '' }));
+  
+  // Embaralhar direita apenas uma vez
+  const shuffledRightItems = rightItems.sort(() => Math.random() - 0.5);
   
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <div className="space-y-2">
-        {pairs.map((p, i) => (
-          <button
-            key={`l-${i}`}
-            onClick={() => onMatchClick('left', i)}
-            disabled={isMatched(i) || answered}
-            className={`w-full p-3 rounded-xl border-2 font-semibold text-sm transition-all duration-200 ${
-              isMatched(i)
-                ? 'bg-finlingo-correct/10 border-finlingo-correct text-foreground'
-                : isSelected('left', i)
-                ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-border bg-card text-foreground hover:border-primary/50'
-            }`}
-          >
-            {p?.left ?? p?.term ?? ''}
-          </button>
-        ))}
+    <div className="space-y-4">
+      <div className="text-sm text-muted-foreground text-center mb-2">
+        Toque em um item da esquerda e depois o matching da direita
       </div>
-      <div className="space-y-2">
-        {shuffledRight.map((origIdx, displayIdx) => (
-          <button
-            key={`r-${displayIdx}`}
-            onClick={() => onMatchClick('right', displayIdx)}
-            disabled={isMatched(origIdx) || answered}
-            className={`w-full p-3 rounded-xl border-2 font-semibold text-sm transition-all duration-200 ${
-              isMatched(origIdx)
-                ? 'bg-finlingo-correct/10 border-finlingo-correct text-foreground'
-                : isSelected('right', displayIdx)
-                ? 'border-secondary bg-secondary/10 text-foreground'
-                : 'border-border bg-card text-foreground hover:border-secondary/50'
-            }`}
-          >
-            {pairs[origIdx]?.right ?? pairs[origIdx]?.definition ?? ''}
-          </button>
-        ))}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Coluna Esquerda */}
+        <div className="space-y-2">
+          {leftItems.map((item, i) => {
+            const isMatched = matchedPairs.has(item.id);
+            const isSelected = matchSelected?.side === 'left' && matchSelected?.idx === item.id;
+            return (
+              <button
+                key={`left-${i}`}
+                onClick={() => onMatchClick('left', item.id)}
+                disabled={answered || isMatched}
+                className={`w-full p-3 rounded-xl border-2 font-medium text-sm transition-all ${
+                  isMatched
+                    ? 'bg-finlingo-correct/10 border-finlingo-correct text-foreground'
+                    : isSelected
+                    ? 'border-primary bg-primary/20 text-foreground ring-2 ring-primary'
+                    : 'border-border bg-card text-foreground hover:border-primary/50'
+                }`}
+              >
+                {item.text}
+              </button>
+            );
+          })}
+        </div>
+        {/* Coluna Direita */}
+        <div className="space-y-2">
+          {shuffledRightItems.map((item, displayIdx) => {
+            const isMatched = matchedPairs.has(item.id);
+            const isSelected = matchSelected?.side === 'right' && matchSelected?.idx === displayIdx;
+            return (
+              <button
+                key={`right-${displayIdx}`}
+                onClick={() => onMatchClick('right', displayIdx)}
+                disabled={answered || isMatched}
+                className={`w-full p-3 rounded-xl border-2 font-medium text-sm transition-all ${
+                  isMatched
+                    ? 'bg-finlingo-correct/10 border-finlingo-correct text-foreground'
+                    : isSelected
+                    ? 'border-secondary bg-secondary/20 text-foreground ring-2 ring-secondary'
+                    : 'border-border bg-card text-foreground hover:border-secondary/50'
+                }`}
+              >
+                {item.text}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
